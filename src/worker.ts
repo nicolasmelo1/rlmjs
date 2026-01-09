@@ -1,20 +1,23 @@
 // prevents TS errors
 declare var self: Worker;
 
-import Bun from "bun";
+import { randomUUIDv7 } from "bun";
 
+const process = {};
+// Overrides the default console.log to send the logs to the parent thread.
 const console = {
   log: (...args: any[]) => postMessage({ type: "console.log", args }),
 };
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
+// Maps the UUIDs of the LLM queries to the promises that resolve or reject them.
 let llmQueryUuidPromises: Map<
   string,
   { resolve: (result: string) => void; reject: (error: Error) => void }
 > = new Map();
 
 const llmQuery = async (prompt: string) => {
-  const uuid = Bun.randomUUIDv7();
+  const uuid = randomUUIDv7();
   postMessage({ type: "llmQuery", prompt, uuid });
 
   let resolve: (result: string) => void;
@@ -41,17 +44,32 @@ self.onmessage = async (event: MessageEvent) => {
       break;
     }
     case "findContext": {
-      console.log("WORKER MESSAGE", event.data.code);
       const functionToGetContext = new AsyncFunction(
         "context",
         "console",
         "llmQuery",
+        "process",
+        "Bun",
+        "require",
         event.data.code,
       );
-      functionToGetContext(event.data.context, console, llmQuery)
+      functionToGetContext(
+        event.data.context,
+        console,
+        llmQuery,
+        undefined,
+        undefined,
+        undefined,
+      )
         .then((res: any) => postMessage({ type: "done", result: res }))
         .catch((error: Error) =>
-          postMessage({ type: "error", error: error.message }),
+          postMessage({
+            type: "error",
+            error: {
+              message: error.message,
+              stack: error.stack,
+            },
+          }),
         );
       break;
     }

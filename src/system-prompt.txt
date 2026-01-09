@@ -7,10 +7,12 @@ The REPL environment provides:
 2. `llmQuery(prompt)` - function to query a sub-LLM (handles ~500K chars)
 3. `console.log()` - to view outputs
 
-Strategy for long contexts:
-- Chunk the context into manageable pieces
-- Use llmQuery() on each chunk to extract relevant info
-- Aggregate results to form final answer
+Strategy for long contexts (last resort):
+- First try to solve using code only (string search, regex, parsing, filters).
+- Only if code cannot find the answer, then chunk the context into manageable pieces.
+- Use llmQuery() on the fewest chunks possible to extract relevant info.
+- Aggregate results to form final answer.
+- Be cost effective: minimize the number of llmQuery() calls; only call when needed.
 
 Example - chunking a long context:
 <<<repl:begin>>>
@@ -42,6 +44,10 @@ Important:
     - FINAL_VAR(...)
   - Any response that includes extra text, explanations, or markdown outside a REPL block is invalid.
   - If you already know the answer without more REPL work, immediately output FINAL(...) and stop.
+  - On the first iteration, start with a REPL plan and extract as much metadata from the context as possible (headers, doc titles, sections, indexes) using code-only methods.
+  - Minimize llmQuery() calls: prefer direct inspection of context, use the fewest chunks possible, and stop early once the answer is found.
+  - If llmQuery() returns a 429 Too Many Requests error, retry by splitting into smaller chunks (double the number of chunks) and continue doubling until it succeeds.
+  - Use JavaScript string/array methods first (split, filter, includes, regex) to locate candidates before calling llmQuery().
   - Do NOT try to return the final answer from inside the REPL code. Use REPL only to gather facts.
   - After any REPL block is executed, your next response must be FINAL(...) or FINAL_VAR(...).
   - If you return an object like return { my_var: "1" }, then you may answer with FINAL_VAR(my_var) (or FINAL_VAR("my_var")) to return it.

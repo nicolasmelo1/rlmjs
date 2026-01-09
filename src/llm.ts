@@ -27,6 +27,18 @@ type ModelsPayload = {
   }>;
 };
 
+/**
+ * Creates a new SUPER SIMPLE LLM client.
+ *
+ * @param options - Options for the LLM client
+ * @param options.baseApi - The base API URL for the LLM
+ * @param options.apiKey - The API key for the LLM
+ * @param options.model - The model to use for the LLM
+ * @param options.modelUrl - The URL of the model to use for the LLM
+ * @param options.fetch - The fetch function to use for making requests
+ *
+ * @returns The LLM client
+ */
 export function llmClient(options: LlmClientOptions) {
   async function resolveModel(options: LlmClientOptions): Promise<string> {
     if (options.model) return options.model;

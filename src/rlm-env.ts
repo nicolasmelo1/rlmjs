@@ -1,3 +1,8 @@
+/**
+ * Builds a REPL environment with the context.
+ * The context is used to query the LLM for information.
+ * The LLM can use `llmQueryFn` to call a subLLM sending chunks of the context
+ */
 export function rlmEnvBuilder(
   llmQueryFn: (context: string) => Promise<string>,
   context: string,
@@ -5,7 +10,13 @@ export function rlmEnvBuilder(
   const variables = new Map<string, any>();
 
   /**
-   * Executes the given code and returns the result
+   * Executes the given code on a sepate worker thread and returns the result.
+   *
+   * If anything goes wrong during execution, it will return the error message so the LLM can improve the code it tried running
+   *
+   * @param code - The code to execute, provied by the LLM
+   *
+   * @returns The output of the code execution
    */
   return {
     variables,

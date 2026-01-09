@@ -1,0 +1,1 @@
+{"maintenance_window":"Tuesday 02:00-02:30 UTC","override_token":"LIMA-7F3"}

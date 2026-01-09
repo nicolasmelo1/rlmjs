@@ -2,6 +2,20 @@ import type { llmClient } from "./llm";
 import systemPrompt from "./system-prompt.txt" with { type: "text/plain" };
 import { rlmEnvBuilder } from "./rlm-env";
 
+/**
+ * Builds a RLM (Recursive Language Model) that can be used to answer queries.
+ *
+ * The RLM is a recursive function that takes a context and a query as input.
+ * It uses the context to query a subLLM (sub-LLM) to get information.
+ * It then uses the information to answer the query.
+ *
+ * @param llm - The main LLM to use for querying information
+ * @param subLlm - The sub-LLM to use for querying information
+ * @param options - Options for the RLM
+ * @param options.maxIterations - The maximum number of iterations to run the RLM
+ *
+ * @returns The RLM function that can be used to answer queries
+ */
 export function rlmBuilder(
   llm: ReturnType<typeof llmClient>,
   subLlm: ReturnType<typeof llmClient>,
@@ -58,10 +72,9 @@ export function rlmBuilder(
       verbose?: boolean;
     },
   ) => {
-    const repl = rlmEnvBuilder(
-      async (prompt: string) => subLlm([{ role: "user", content: prompt }]),
-      context,
-    );
+    const repl = rlmEnvBuilder(async (prompt: string) => {
+      return subLlm([{ role: "user", content: prompt }]);
+    }, context);
 
     const messages: Array<{ role: "user" | "system"; content: string }> = [
       {
@@ -80,7 +93,7 @@ export function rlmBuilder(
       const userMsg =
         i === 0
           ? `First, explore the context in the REPL. Then answer: "${query}"\n\nYou are on iteration ${i} of ${maxIterations}\n\nYour next action:`
-          : `Continue workint to answer: "${query}"\n\nYou are on iteration ${i} of ${maxIterations}\n\nYour next action:`;
+          : `Continue working to answer: "${query}"\n\nYou are on iteration ${i} of ${maxIterations}\n\nYour next action:`;
 
       messages.push({ role: "user", content: userMsg });
 
